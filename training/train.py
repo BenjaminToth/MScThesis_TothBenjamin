@@ -856,6 +856,18 @@ def _ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
+def _round_metrics_recursively(obj: Any, decimals: int = 4) -> Any:
+    """Recursively round all float values in a data structure to the specified decimal places."""
+    if isinstance(obj, float):
+        return round(obj, decimals)
+    elif isinstance(obj, dict):
+        return {k: _round_metrics_recursively(v, decimals) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return type(obj)(_round_metrics_recursively(item, decimals) for item in obj)
+    else:
+        return obj
+
+
 def _save_checkpoint(
     out_path: Path,
     *,
@@ -1310,13 +1322,9 @@ def main() -> None:
     _ensure_dir(models_dir)
 
     ckpt_path = models_dir / f"{run_name}_best.pt"
-    json_path = exp_dir / f"{run_name}.json"
-
-    history: Dict[str, Any] = {
-        "train_loss": [],
-        "val_loss": [],
-    }
-
+    random_id = secrets.randbelow(100000000)
+    json_filename = f"{args.model}_{random_id:08d}.json"
+    json_path = exp_dir / json_filename
 
     best_metrics = {
         "val_loss": {"value": float("inf"), "epoch": -1},
@@ -1464,9 +1472,6 @@ def main() -> None:
             val_per_class_recall_tuned = [float(x) for x in val_per_class_recall]
             tuned_thresholds = [float(args.pred_threshold)] * len(train_ds.label_names)
 
-        history["train_loss"].append(float(train_loss))
-        history["val_loss"].append(float(val_loss))
-
         val_macro_pr_auc_major = _subset_macro(val_per_class_ap, train_ds.label_names, MAJOR_CLASSES)
         val_macro_f1_major_tuned = _subset_macro(val_per_class_f1_tuned, train_ds.label_names, ("chew", "elec", "eyem", "musc"))
         val_macro_f1_minor_tuned = _subset_macro(val_per_class_f1_tuned, train_ds.label_names, ("elpp", "shiv"))
@@ -1508,7 +1513,7 @@ def main() -> None:
         if float(val_macro_f1_minor_tuned) > best_metrics["val_macro_F1_minor_tuned"]["value"]:
             best_metrics["val_macro_F1_minor_tuned"] = {"value": float(val_macro_f1_minor_tuned), "epoch": epoch}
 
-        score_for_selection = float(val_macro_f1_tuned) if (not bool(args.no_tune_thresholds)) else float(val_macro_f1)
+        score_for_selection = float(val_macro_f1_tuned)
 
         improved = score_for_selection > best_val_macro_f1
         if improved:
@@ -1540,12 +1545,16 @@ def main() -> None:
         )
 
 
-    best_summary = {k: {"value": v["value"], "epoch": v["epoch"]} for k, v in best_metrics.items() if v["value"] is not None}
+    best_summary = {k: {"value": v["value"]} for k, v in best_metrics.items() if v["value"] is not None}
 
+    settings_dict = asdict(settings)
+    settings_dict.pop("run_name", None)
+    
+    # Round all metrics to 4 decimal places
+    best_summary_rounded = _round_metrics_recursively(best_summary, decimals=4)
     results = {
-        "best_metrics": best_summary,
-        "history": history,
-        "settings": asdict(settings),
+        "best_metrics": best_summary_rounded,
+        "settings": settings_dict,
     }
 
     with json_path.open("w", encoding="utf-8") as f:

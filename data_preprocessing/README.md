@@ -2,6 +2,14 @@
 
 Quick start for EEG signal preprocessing and visualization.
 
+## Data Source
+
+This project uses the **TUH EEG Corpus** (Temple University Hospital EEG Database) for artifact detection and classification.
+
+**Dataset:** https://isip.piconepress.com/projects/nedc/html/tuh_eeg/index.shtml
+
+The TUH EEG dataset provides a large collection of clinical EEG recordings with annotated artifacts, making it ideal for training deep learning models for automated artifact detection.
+
 ## Setup
 
 1. Edit the config file: `preprocess_mne_cfg/TUAR_100_Avg.yaml`

@@ -210,7 +210,6 @@ __marimo__/
 data/
 
 # EEG-Artifacts results (experiments and saved models)
-results/experiments/
 results/saved_models/
 results/saved_wgangp/
 results/saved_ldm/
