@@ -1,0 +1,81 @@
+{
+  "best_metrics": {
+    "val_macro_F1_major_tuned": {
+      "value": 0.6805
+    },
+    "val_macro_PR_AUC_major": {
+      "value": 0.6302
+    }
+  },
+  "settings": {
+    "aug_channel_dropout": false,
+    "aug_channel_dropout_frac": 0.1,
+    "aug_channel_dropout_prob": 0.0,
+    "aug_gaussian_noise": true,
+    "aug_gaussian_noise_prob": 0.0,
+    "aug_gaussian_noise_snr_db": 20.0,
+    "aug_ldm_major": false,
+    "aug_ldm_n_per_class": 10000,
+    "aug_ldm_num_inference_steps": 2,
+    "aug_ldm_root": "results/saved_ldm",
+    "aug_mixup": false,
+    "aug_mixup_prob": 0.0,
+    "aug_pink_noise": false,
+    "aug_pink_noise_prob": 0.0,
+    "aug_pink_noise_snr_db": 20.0,
+    "aug_segment_recombination": false,
+    "aug_segment_recombination_n_segments": 8,
+    "aug_segment_recombination_prob": 0.0,
+    "aug_time_domain": false,
+    "aug_time_domain_crop_frac": 0.9,
+    "aug_time_domain_shift_frac": 0.05,
+    "aug_wgangp_major": false,
+    "aug_wgangp_n_per_class": 10000,
+    "aug_wgangp_root": "results/saved_wgangp",
+    "batch_size": 64,
+    "clip": 0.05,
+    "device": "cpu",
+    "epochs": 100,
+    "gamma_neg": 2.0,
+    "gamma_pos": 1.0,
+    "gpu": 0,
+    "lr": 0.0001,
+    "major_sampler_classes": [
+      "chew",
+      "elec",
+      "eyem",
+      "musc"
+    ],
+    "min_overlap_frac_artifact": 0.25,
+    "min_overlap_sec": 0.25,
+    "model": "eegnet",
+    "model_kwargs": {
+      "d": 2,
+      "depthwise_kernel_length": 15,
+      "dropout": 0.5,
+      "f1": 8,
+      "f2": null,
+      "kernel_length": 63,
+      "n_channels": 17,
+      "n_classes": 6,
+      "n_samples": 2000
+    },
+    "n_channels": 17,
+    "n_classes": 6,
+    "normalize": true,
+    "num_workers": 4,
+    "pred_threshold": 0.5,
+    "repeat_threshold": 0.05,
+    "sampler": "major_only",
+    "sampler_warmup_epochs": 1,
+    "seed": 44,
+    "sfreq": 250.0,
+    "split_root": "data/01_tcp_ar_split",
+    "stride_sec": 0.5,
+    "threshold_grid_size": 101,
+    "train_samples_per_epoch": 0,
+    "tune_thresholds": true,
+    "weight_decay": 0.0,
+    "window_sec": 8.0
+  }
+}

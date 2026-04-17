@@ -1,0 +1,82 @@
+\documentclass[final]{elteikthesis}
+
+\usepackage{booktabs} 
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{makecell}
+
+
+% -------- This fixes chapters ----------
+\usepackage{titlesec}
+\titleformat{\chapter}[hang]
+  {\normalfont\huge\bfseries}
+  {\thechapter.} 
+  {1em}
+  {}
+% -------- This fixes margins -----------
+\usepackage{geometry}
+\geometry{
+  left=25mm,
+  right=25mm,
+  top=25mm,
+  bottom=25mm
+}
+% ---------------------------------------
+
+% -------- Paragraph spacing control ----
+\setlength{\parindent}{6pt}
+% ---------------------------------------
+
+
+\addbibresource{references.bib}
+
+\title{EEG Artifact Detection and Filtering Using Machine Learning and Deep Learning Approaches}
+\date{2026}
+
+\author{Benjámin Tóth}
+\degree{Computer Science MSc}
+
+\supervisor{László Gulyás}
+\affiliation{Associate Professor, PhD}
+
+\extsupervisor{András Lukács}
+\extaffiliation{Associate Professor, PhD}
+
+\university{Eötvös Loránd University}
+\faculty{Faculty of Informatics}
+\department{Department of Artificial Intelligence}
+\city{Budapest}
+
+\logo{elte_cimer_szines}
+
+\begin{document}
+
+\documentlang{english}
+
+\maketitle
+
+\input{chapters/Abstract}
+\input{chapters/Acknowledgements}
+
+\newpage
+
+\tableofcontents
+
+\input{chapters/Introduction}
+\input{chapters/Background}
+\input{chapters/Methods}
+\input{chapters/Results}
+\input{chapters/Discussions}
+\input{chapters/Conclusions}
+
+
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{\biblabel}
+\printbibliography[title=\biblabel]
+
+\appendix
+\input{chapters/Appendices}
+
+
+\end{document}

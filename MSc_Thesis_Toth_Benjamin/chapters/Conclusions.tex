@@ -1,0 +1,9 @@
+\chapter{Conclusions}
+
+The purpose of this study was to investigate the effect of the proposed generative augmentation method on EEG artifact classification performance in a highly imbalanced setting provided by the TUAR dataset. The study introduced a latent diffusion-based augmentation technique, in which a separate model was trained for each artifact and synthetically generated EEG data were used for dataset extension. Two comprehensive experiments were conducted, one comparing standalone performance of existing and the proposed augmentations, and another for measuring the effect of the proposed technique when combined with existing pipelines.
+
+The results of the first experiment showed that the latent diffusion-based augmentation was able to improve classification models by approximately 3.7\% in Macro F1 and 3.5\% in Macro PR AUC. The second experiment demonstrated that combining the existing augmentation pipelines with the proposed method achieved small but consistent improvements over their baseline performance. While both experiments demonstrated improved performance using the diffusion-based technique, the proposed augmentation was outperformed by both nongenerative and WGAN-based methods. 
+
+The analysis of the results indicates that the proposed method is not yet able to match the performance of the simpler WGAN-based strategy. However, further optimising the information compression process and latent space representation within the VAE, the proposed model has the potential to achieve improved performance and outperform other generative augmentations.
+
+In conclusion, the conducted experiments suggest that the proposed latent diffusion-based augmentation is a promising direction for enhancing artifact detection and handling imbalanced EEG datasets.

@@ -1,0 +1,60 @@
+# ============================================================================
+# IMPORTANT: Configure these paths for your local environment
+# ============================================================================
+# Set input_path to the directory containing your EDF files
+input_path: ./data/raw/
+
+# Set output_path to where preprocessed data will be saved
+output_path: ./data/preprocessed/
+
+# Set stats_dir to store preprocessing statistics
+stats_dir: ./data/preprocessed/stats/
+
+# ============================================================================
+# Processing Parameters
+# ============================================================================
+percent: 100                    # Percentage of files to process (100 = all)
+sample_rates: null              # Target sample rates; null = use original
+resample_freq: 250              # Resample frequency in Hz
+
+# Computational settings
+n_jobs: 16                       # Number of parallel jobs (-1 = use all CPUs)
+seed: 42                         # Random seed for reproducibility
+
+# ============================================================================
+# Artifact Detection Settings
+# ============================================================================
+detect_artifacts: True
+artifact_config:
+  flatline_min_samples: 50
+  flatline_grace_percent: 10.0
+  flatline_tolerance: null
+  variance_low_threshold_uV: 0.5
+  variance_high_threshold_uV: 195
+  variance_min_samples: 250
+  merge_overlap_ratio: 0.1
+  separate_annotations: false
+
+# ============================================================================
+# Filtering Parameters (Hz)
+# ============================================================================
+high_pass: 0.5
+low_pass: 80
+clip_threshold: 200
+
+# ============================================================================
+# Montage Selection
+# ============================================================================
+montage:
+  - Avg
+
+# ============================================================================
+# Annotations Configuration
+# Update the path(s) to match your annotation file locations
+# ============================================================================
+annotations:
+  TUAR: ./data/raw/
+
+# If true, replaces composite labels like 'eyem_musc' with overlapping base labels
+# ('eyem' and 'musc') in the exported EDF annotations.
+decompose_composite_labels: true

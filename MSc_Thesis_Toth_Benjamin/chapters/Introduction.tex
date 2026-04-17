@@ -1,0 +1,34 @@
+\chapter{Introduction}
+
+\section{Motivation}
+
+Electroencephalography (EEG) is one of the most commonly used techniques for measuring brain activity. This technique finds application not only in clinical settings but also in research into neurology. However, EEG techniques that are used in practice are very sensitive to artifacts originating from the position of the electrodes and physiological electrical noise. 
+
+These artifacts are able to corrupt the signal, which makes interpretation and EEG analysis significantly more difficult. Epilepsy or seizure detection, anesthesia depth monitoring and emotion recognition are fields that are often corrupted by artifacts similar to meaningful neural activity. This can often produce false positives and often results in degraded model performance.
+
+With the application of EEG classification methods, misinterpretation of brain activity can be significantly reduced. Modern deep learning models demonstrate great results in solving such tasks as they are capable of learning complex signal characteristics of raw EEG data. These methods demonstrated state-of-the-art performance on many EEG classification benchmarks and become a basic tool in both clinical and research applications.
+
+The main weakness of deep learning approaches is their requirement of large amounts of labeled data. EEG dataset annotation is expensive, time-consuming, and requires trained experts to accurately classify recordings, which results in their limited availability. Another problem is that the occurrence of different types of artifacts varies strongly in EEG recordings. This results in class imbalance, where rare labels are underrepresented while major artifacts dominate.
+
+In order to over these challenges in the field, new methods are needed to improve data efficiency and boost model generalisation without requiring additional manual annotation.
+
+\section{Why Generative Augmentation}
+
+Data augmentation techniques offer solution to data scarcity and help improve generalisation. There are traditional augmentations used for EEG data, similar to the image based augmentation methods, such as noise injection, shifting, and cropping. There are also EEG specific methods including channel dropout, frequency and time-domain augmentations.
+
+Generative augmentations also demonstrated strong results by extending existing datasets with fully synthetic data. This data is produced by generative models capable of learning the statistics of the original dataset and producing synthetic datapoints from the estimated distribution. The best results are often achieved by a combined augmentation pipeline, in which the synthetic data is generated and added to the dataset, then the traditional augmentations are applied, further increasing data variance.
+
+Generative adversarial networks are widely used for dataset expansion, achieving performance gains in most pipelines. Diffusion models offer a powerful alternative that presents more stable and consistent training behavior with the technique of gradually transforming noise into realistic samples. 
+Latent diffusion is a variant of the diffusion model family in which the generative process takes place in a compressed latent space with reduced computational complexity. This solution is also advantageous for high-dimensional EEG data.
+
+While these models become popular in most deep learning frameworks, the application of latent diffusion methods to EEG artifact augmentation remains limited. This thesis addresses this gap by investigating the effectiveness of a proposed latent diffusion-based augmentation method in comparison with other augmentation techniques.
+
+\section{Contributions}
+
+The main contribution of this thesis is a latent diffusion-based augmentation method, specialised for synthetic EEG artifact generation in imbalanced datasets. A per-class augmentation strategy is introduced in this work, in which a separate model is trained for each class and evaluated using the TUAR dataset for artifact classification.
+
+A comprehensive comparison is conducted and analysed in this study, where the proposed augmentation method is compared to commonly used nongenerative baseline augmentations and a WGAN-based generative model. The effects of the augmentations are evaluated on a diverse set of EEG classification models, including baseline and state-of-the-art architectures. In the first experiment, all model-augmentation pairs are trained multiple times to compare the effects of different augmentation methods to the proposed method. In the second experiment the effect of proposed technique is measured when it is applied together with existing augmentation pipelines, and compared to their baseline performance. The results demonstrate that the proposed latent diffusion-based approach can improve classification performance.
+
+This study also focuses on the imbalanced aspect of artifact detection by analysing improvements separately for each class. It demonstrates that the synthetic EEG data generated using the latent diffusion model can improve classification performance for both dominant and underrepresented classes.
+
+Additionally, the thesis provides a detailed description of the implemented preprocessing pipeline and a clinically realistic dataset splitting technique, which are particularly important in the field of EEG classification and for the reproducibility of the experimental results.
