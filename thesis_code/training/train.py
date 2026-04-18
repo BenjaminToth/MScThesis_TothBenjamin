@@ -537,15 +537,17 @@ def _make_loaders(
             replacement=True,
             generator=gen,
         )
-        train_loader = torch.utils.data.DataLoader(
-            train_ds,
-            batch_size=batch_size,
-            sampler=train_sampler,
-            shuffle=False,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            persistent_workers=persistent_workers,
-        )
+        loader_kwargs = {
+            "batch_size": batch_size,
+            "sampler": train_sampler,
+            "shuffle": False,
+            "num_workers": num_workers,
+            "pin_memory": pin_memory,
+            "persistent_workers": persistent_workers,
+        }
+        if num_workers > 0:
+            loader_kwargs["prefetch_factor"] = 2
+        train_loader = torch.utils.data.DataLoader(train_ds, **loader_kwargs)
     elif sampler_name == "major_only":
         missing = [name for name in MAJOR_CLASSES if name not in train_ds.label_to_idx]
         if missing:
@@ -568,24 +570,28 @@ def _make_loaders(
             replacement=True,
             generator=gen,
         )
-        train_loader = torch.utils.data.DataLoader(
-            train_ds,
-            batch_size=batch_size,
-            sampler=train_sampler,
-            shuffle=False,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            persistent_workers=persistent_workers,
-        )
+        loader_kwargs = {
+            "batch_size": batch_size,
+            "sampler": train_sampler,
+            "shuffle": False,
+            "num_workers": num_workers,
+            "pin_memory": pin_memory,
+            "persistent_workers": persistent_workers,
+        }
+        if num_workers > 0:
+            loader_kwargs["prefetch_factor"] = 2
+        train_loader = torch.utils.data.DataLoader(train_ds, **loader_kwargs)
     elif sampler_name == "none":
-        train_loader = torch.utils.data.DataLoader(
-            train_ds,
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=num_workers,
-            pin_memory=pin_memory,
-            persistent_workers=persistent_workers,
-        )
+        loader_kwargs = {
+            "batch_size": batch_size,
+            "shuffle": True,
+            "num_workers": num_workers,
+            "pin_memory": pin_memory,
+            "persistent_workers": persistent_workers,
+        }
+        if num_workers > 0:
+            loader_kwargs["prefetch_factor"] = 2
+        train_loader = torch.utils.data.DataLoader(train_ds, **loader_kwargs)
     else:
         raise ValueError(f"Unknown sampler: {sampler}")
 

@@ -334,7 +334,7 @@ The following artifact classes are used across all scripts:
 
 - **Seed Management**: Use `--seed 42` for reproducibility or `--seed -1` for a random seed
 - **GPU/CPU**: Use `--device auto` to auto-detect, `--device cpu` for CPU-only, or `--device cuda:0` for specific GPU
-- **LDM + GPU**: When using `--aug-ldm-major` with GPU-based data loading, set `--num-workers 0` to avoid CUDA issues in worker processes
+- **LDM Augmentation**: LDM augmentation supports only `--num-workers 0` in the current version. When using `--aug-ldm-major`, always set `--num-workers 0` to avoid CUDA issues
 - **Model Checkpoints**: Classification models are saved in `results/experiments/` with unique IDs based on model name and seed
 - **GAN/LDM Models**: Generators saved in `results/saved_wgangp/<class>/` and `results/saved_ldm/<class>/`
 - **Threshold Tuning**: By default, per-class thresholds are tuned on the dev set to maximize F1. Disable with `--no-tune-thresholds`

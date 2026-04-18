@@ -223,7 +223,7 @@ $\Delta$ (\%)
 
 The results of the composition-based trainings are presented in Table~\ref{tab:combined_composition_results}. Similarly to the model-augmentation paired settings, all composition-based methods improved performance compared to the baseline across all models.
 
-Both CAP and CPP further improved the scores compared to the previous experiment, corresponding to more than 5\% gains in Macro F1 and 4\% in Macro PR AUC score over the baseline. The introduction of generative augmentations improved upon these results, as the addition of both WGAN and LDIF increased the overall performance.
+Both CAP and CPP further improved the scores compared to the previous experiment, corresponding to more than +5\% gains in Macro F1 and +4\% in Macro PR AUC score over the baseline. The introduction of generative augmentations improved upon these results, as the addition of both WGAN and LDIF increased the overall performance.
 
 The combined method of CAP + WGAN resulted in the highest average performance gain, achieving +5.77\% in Macro F1 and +5.51\% in Macro PR AUC. While the addition of WGAN has the strongest effect on both CAP and CPP, LDIF also managed to produce top Macro F1 scores for EEGNet and top Macro PR AUC score for EEGInceptionERP. 
 
@@ -242,13 +242,13 @@ Figure~\ref{fig:augmentation_delta} illustrates the effects of the combined meth
 While combinations including generative methods were able to further improve classification performance compared to CAP or CPP alone, the additional gains provided by these combinations were relatively modest.
 
 
-\section{Additional Experiments}
+\section{Class-Level Performance Evaluation}
 
 The effectiveness of the proposed LDIF augmentation across different artifact classes is presented in Table~\ref{tab:combined_performance}. The results show improvements on all labels for both metrics. 
 
-The highest improvement was achieved for the chew class with a +7.11\% gain in F1 score, while the models were also able to improve the classification of the elec label with gains of +3.42\% in F1 and +4.94\% in PR AUC. 
+The highest improvement was achieved for the \texttt{chew} class with a +7.11\% gain in F1 score, while the models were also able to improve the classification of the \texttt{elec} label with gains of +3.42\% in F1 and +4.94\% in PR AUC. 
 
-The proposed method could also achieve moderate improvement on the already well classified eyem label, reaching the highest F1 score of 0.8308 and the highest PR AUC of 0.7901, with gain of +2.59\% and +2.62\% respectively.
+The proposed method could also achieve moderate improvement on the already well classified \texttt{eyem} label, reaching the highest F1 score of 0.8308 and the highest PR AUC of 0.7901, with gain of +2.59\% and +2.62\% respectively.
 
 \begin{table}[H]
 \centering

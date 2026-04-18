@@ -21,6 +21,7 @@ class _LDMClassArtifacts:
 
 
 def _zscore_per_channel(x: torch.Tensor, *, eps: float = 1e-6) -> torch.Tensor:
+    # x: (C, T)
     mu = x.mean(dim=1, keepdim=True)
     sigma = x.std(dim=1, keepdim=True, unbiased=False)
     return (x - mu) / (sigma + eps)
@@ -35,7 +36,7 @@ class LDMSyntheticMajorClassDataset(Dataset):
 
     Notes:
       - This dataset is deterministic per (seed, idx) by reseeding torch RNG in __getitem__.
-      - Models are loaded lazily on first __getitem__ in the current process.
+      - Models are eagerly loaded on dataset __init__ to avoid first-batch stalls.
       - If generating on CUDA, this dataset should be used with DataLoader num_workers=0.
 
             Performance:
@@ -43,7 +44,13 @@ class LDMSyntheticMajorClassDataset(Dataset):
                 - For large n_per_class (e.g., 10,000), this class automatically enables a disk-backed
                     cache under <ldm_root>/_ldm_cache/ so each synthetic index is generated once per run
                     configuration, then loaded quickly on subsequent accesses/epochs.
+                - Batch generation: uncached misses generate multiple samples at once (default 8)
+                    to improve GPU utilization.
     """
+    
+    # Batch size for on-the-fly diffusion generation (uncached misses).
+    # Generates multiple samples per GPU pass for better utilization.
+    _BATCH_GENERATION_SIZE = 8
 
     def __init__(
         self,
@@ -118,20 +125,28 @@ class LDMSyntheticMajorClassDataset(Dataset):
                 + ", ".join(missing_artifacts)
             )
 
+        # Lazy-loaded per-class models (current process)
         self._models: Dict[str, EEGLatentDiffusion] | None = None
 
+        # Cache config (disk-backed memmaps, one per class).
+        # Default behavior: enable cache for large synthetic datasets to avoid re-running diffusion
+        # for the same index across epochs.
         if enable_cache is None:
-            enable_cache = self.n_per_class >= 2000
+            enable_cache = self.n_per_class >= 500
         self.enable_cache = bool(enable_cache)
         self.cache_root = (self.ldm_root / "_ldm_cache") if self.enable_cache else None
         self._cache_x: Dict[str, np.memmap] = {}
         self._cache_done: Dict[str, np.memmap] = {}
+        # Cache per class uses the chosen number of inference steps (override or checkpoint setting).
         self._n_steps_by_class: Dict[str, int] = {}
         for class_name in self.classes:
             if self.num_inference_steps_override is not None:
                 self._n_steps_by_class[class_name] = int(self.num_inference_steps_override)
             else:
                 self._n_steps_by_class[class_name] = int(self._artifacts[class_name].settings.get("num_inference_steps", 50))
+        
+        # Eagerly load all models on dataset init to avoid stalling during first __getitem__ call
+        self._ensure_models_loaded()
 
     def _validate_settings(self, class_name: str, settings: dict) -> None:
         sfreq = float(settings.get("sfreq", -1.0))
@@ -193,6 +208,8 @@ class LDMSyntheticMajorClassDataset(Dataset):
     def _cache_paths(self, class_name: str) -> tuple[Path, Path, Path]:
         assert self.cache_root is not None
 
+        # Include key params that change the generated signal.
+        # (Most importantly: num_inference_steps, seed, window shape, normalization.)
         n_steps = int(self._n_steps_by_class[class_name])
         norm_tag = "norm" if self.normalize else "raw"
         shape_tag = f"c17_t{int(self.expected_n_samples)}"
@@ -254,6 +271,8 @@ class LDMSyntheticMajorClassDataset(Dataset):
             }
             meta_path.write_text(json.dumps(meta, indent=2, sort_keys=True), encoding="utf-8")
 
+        # Create/load disk-backed arrays.
+        # Use .npy memmaps for fast random access without loading full arrays into RAM.
         x_mm = np.lib.format.open_memmap(
             str(x_path),
             mode="r+" if x_path.exists() else "w+",
@@ -271,6 +290,7 @@ class LDMSyntheticMajorClassDataset(Dataset):
         self._cache_done[class_name] = done_mm
 
     def _item_seed(self, *, class_i: int, within_i: int) -> int:
+        # Deterministic seed per synthetic item across epochs/runs.
         return int(self.seed) + 1337 * (int(class_i) + 1) + int(within_i)
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -281,6 +301,7 @@ class LDMSyntheticMajorClassDataset(Dataset):
         within = int(idx) % self.n_per_class
         class_name = self.classes[class_i]
 
+        # Fast-path: disk cache hit.
         if self.enable_cache:
             self._ensure_cache_for_class(class_name)
             done = self._cache_done[class_name]
@@ -294,40 +315,63 @@ class LDMSyntheticMajorClassDataset(Dataset):
         self._ensure_models_loaded()
         assert self._models is not None
 
-        item_seed = self._item_seed(class_i=class_i, within_i=within)
-        torch.manual_seed(item_seed)
-        if self.device.type == "cuda":
-            torch.cuda.manual_seed_all(item_seed)
-
         model = self._models[class_name]
-
         n_steps = int(self._n_steps_by_class[class_name])
 
+        # Batch generation for efficiency: generate multiple samples at once to improve GPU utilization.
+        # This reduces the number of separate forward passes through the diffusion model.
+        batch_size = min(self._BATCH_GENERATION_SIZE, self.n_per_class - within)
+        batch_indices = list(range(within, min(within + batch_size, self.n_per_class)))
+        
+        batch_samples = []
+        for batch_idx, batch_within in enumerate(batch_indices):
+            item_seed = self._item_seed(class_i=class_i, within_i=batch_within)
+            torch.manual_seed(item_seed)
+            if self.device.type == "cuda":
+                torch.cuda.manual_seed_all(item_seed)
+            batch_samples.append(item_seed)
+
+        # Generation: use inference_mode and autocast for speed.
+        # Note: output is moved to CPU for caching and DataLoader compatibility.
         with torch.inference_mode():
             if self.device.type == "cuda":
+                # Prefer fp16 autocast for speed; decoding back to fp32 is done below.
                 with torch.autocast(device_type="cuda", dtype=torch.float16):
-                    x_b = model.generate(batch_size=1, device=self.device, num_inference_steps=n_steps)
+                    x_b = model.generate(batch_size=len(batch_indices), device=self.device, num_inference_steps=n_steps)
             else:
-                x_b = model.generate(batch_size=1, device=self.device, num_inference_steps=n_steps)
+                x_b = model.generate(batch_size=len(batch_indices), device=self.device, num_inference_steps=n_steps)
 
-        x = x_b[0].to(dtype=torch.float32, device="cpu")
-
-        if self.normalize:
-            x = _zscore_per_channel(x)
-
+        # Process and cache all generated samples
+        results = []
         if self.enable_cache:
             self._ensure_cache_for_class(class_name)
             x_mm = self._cache_x[class_name]
             done_mm = self._cache_done[class_name]
-            x_mm[within] = x.to(dtype=torch.float16).numpy(force=True)
-            done_mm[within] = 1
+
+        for batch_idx, batch_within in enumerate(batch_indices):
+            # (B, C, T) -> (C, T) on CPU for batch item
+            x = x_b[batch_idx].to(dtype=torch.float32, device="cpu")
+
+            if self.normalize:
+                x = _zscore_per_channel(x)
+
+            # Cache all generated samples
+            if self.enable_cache:
+                x_mm[batch_within] = x.to(dtype=torch.float16).numpy(force=True)
+                done_mm[batch_within] = 1
+
+            # Store first result to return
+            if batch_idx == 0:
+                results.append(x)
+
+        if self.enable_cache:
             x_mm.flush()
             done_mm.flush()
 
         y = torch.zeros((len(self.label_names),), dtype=torch.float32)
         y[self.label_to_idx[class_name]] = 1.0
 
-        return x, y
+        return results[0], y
 
 
 def build_major_class_ldm_augmentation(
